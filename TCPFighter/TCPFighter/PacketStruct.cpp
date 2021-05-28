@@ -1,4 +1,5 @@
 #include<Windows.h>
+#include "CPacket.h"
 #include "PacketStruct.h"
 #include "PacketDefine.h"
 
@@ -32,25 +33,21 @@ void mp_SC_DeleteCharacter(st_MSG_SC_DELETE_CHARACTER* packet, DWORD id)
 	packet->dwID = id;
 }
 
-void mp_CS_MoveStart(st_MSG_CS_MOVE_START* packet, BYTE dir, USHORT x, USHORT y)
+void mp_CS_MoveStart(CPacket* clpPacket, BYTE dir, USHORT x, USHORT y)
+{
+	*clpPacket << dir << x << y;
+}
+
+void mp_SC_MoveStart(st_MSG_SC_MOVE_START* packet, BYTE dir, USHORT x, USHORT y)
 {
 	packet->byDir = dir;
 	packet->ushX = x;
 	packet->ushY = y;
 }
 
-void mp_SC_MoveStart(st_MSG_CS_MOVE_START* packet, BYTE dir, USHORT x, USHORT y)
+void mp_CS_MoveStop(CPacket* clpPacket, BYTE dir, USHORT x, USHORT y)
 {
-	packet->byDir = dir;
-	packet->ushX = x;
-	packet->ushY = y;
-}
-
-void mp_CS_MoveStop(st_MSG_CS_MOVE_STOP* packet, BYTE dir, USHORT x, USHORT y)
-{
-	packet->byDir = dir;
-	packet->ushX = x;
-	packet->ushY = y;
+	*clpPacket << dir << x << y;
 }
 
 void mp_SC_MoveStop(st_MSG_CS_MOVE_STOP* packet, BYTE dir, USHORT x, USHORT y)
@@ -60,11 +57,9 @@ void mp_SC_MoveStop(st_MSG_CS_MOVE_STOP* packet, BYTE dir, USHORT x, USHORT y)
 	packet->ushY = y;
 }
 
-void mp_CS_Attack1(st_MSG_CS_ATTACK1* packet, BYTE dir, USHORT x, USHORT y)
+void mp_CS_Attack1(CPacket* clpPacket, BYTE dir, USHORT x, USHORT y)
 {
-	packet->byDir = dir;
-	packet->ushX = x;
-	packet->ushY = y;
+	*clpPacket << dir << x << y;
 }
 
 void mp_SC_Attack1(st_MSG_SC_ATTACK1* packet, DWORD id, BYTE dir, USHORT x, USHORT y)
@@ -75,11 +70,9 @@ void mp_SC_Attack1(st_MSG_SC_ATTACK1* packet, DWORD id, BYTE dir, USHORT x, USHO
 	packet->ushY = y;
 }
 
-void mp_CS_Attack2(st_MSG_CS_ATTACK2* packet, BYTE dir, USHORT x, USHORT y)
+void mp_CS_Attack2(CPacket* clpPacket, BYTE dir, USHORT x, USHORT y)
 {
-	packet->byDir = dir;
-	packet->ushX = x;
-	packet->ushY = y;
+	*clpPacket << dir << x << y;
 }
 
 void mp_SC_Attack2(st_MSG_SC_ATTACK2* packet, DWORD id, BYTE dir, USHORT x, USHORT y)
@@ -90,11 +83,9 @@ void mp_SC_Attack2(st_MSG_SC_ATTACK2* packet, DWORD id, BYTE dir, USHORT x, USHO
 	packet->ushY = y;
 }
 
-void mp_CS_Attack3(st_MSG_CS_ATTACK3* packet, BYTE dir, USHORT x, USHORT y)
+void mp_CS_Attack3(CPacket* clpPacket, BYTE dir, USHORT x, USHORT y)
 {
-	packet->byDir = dir;
-	packet->ushX = x;
-	packet->ushY = y;
+	*clpPacket << dir << x << y;
 }
 
 void mp_SC_Attack3(st_MSG_SC_ATTACK3* packet, DWORD id, BYTE dir, USHORT x, USHORT y)

@@ -51,7 +51,7 @@ void CPacket::Clear(void)
 
 char* CPacket::GetBufferPtr(void)
 {
-	return m_chpBuffer;
+	return &m_chpBuffer[m_iFront];
 }
 
 int CPacket::MoveWritePos(int iSize)
@@ -205,6 +205,14 @@ CPacket& CPacket::operator<<(int iValue)
 	return *this;
 }
 
+CPacket& CPacket::operator<<(unsigned long lValue)
+{
+	*((unsigned long*)&m_chpBuffer[m_iRear]) = lValue;
+	MoveWritePos(sizeof(unsigned long));
+
+	return *this;
+}
+
 CPacket& CPacket::operator<<(long lValue)
 {
 	*((long*)&m_chpBuffer[m_iRear]) = lValue;
@@ -217,6 +225,8 @@ CPacket& CPacket::operator<<(__int64 iValue)
 {
 	*((__int64*)&m_chpBuffer[m_iRear]) = iValue;
 	MoveWritePos(sizeof(__int64));
+
+	return *this;
 }
 
 CPacket& CPacket::operator<<(float fValue)

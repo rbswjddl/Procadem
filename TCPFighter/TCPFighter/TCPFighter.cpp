@@ -22,6 +22,7 @@
 #include "CEffectObject.h"
 #include "LinkedList.h"
 #include "CRingBuffer.h"
+#include "CPacket.h"
 #include<timeapi.h>
 //#include "CFrameSkip.h"
 #include<windowsx.h>
@@ -95,15 +96,15 @@ void TimeCheckFunc();
 void InitSocket(HWND hWnd);
 void ReadEvent();
 void SendEvent();
-void PacketProcCreateMyCharater(const char*);
-void PacketProcCreateOtherCharater(const char*);
-void PacketProcDeleteCharater(const char*);
-void PacketProcSCMoveStart(const char*);
-void PacketProcSCMoveStop(const char*);
-void PacketProcSCAttack1(const char*);
-void PacketProcSCAttack2(const char*);
-void PacketProcSCAttack3(const char*);
-void PacketProcDamage(const char*);
+void PacketProcCreateMyCharater(CPacket*);
+void PacketProcCreateOtherCharater(CPacket*);
+void PacketProcDeleteCharater(CPacket*);
+void PacketProcSCMoveStart(CPacket*);
+void PacketProcSCMoveStop(CPacket*);
+void PacketProcSCAttack1(CPacket*);
+void PacketProcSCAttack2(CPacket*);
+void PacketProcSCAttack3(CPacket*);
+void PacketProcDamage(CPacket*);
 
 void SendPacket();
 
@@ -546,10 +547,13 @@ void InitSocket(HWND hWnd)
 
 void ReadEvent()
 {
-    char buffer[500];
+    //char buffer[500];
+    CPacket clPacket;
     DWORD errCode;
     st_HEADER stHeader;
-    int readByte = recv(g_MySession.servSock, buffer, sizeof(buffer), 0);
+    //int readByte = recv(g_MySession.servSock, buffer, sizeof(buffer), 0);
+
+    int readByte = recv(g_MySession.servSock, clPacket.GetBufferPtr(), clPacket.GetBufferSize(), 0);
 
     if (readByte == 0 || readByte == SOCKET_ERROR)
     {
@@ -569,7 +573,9 @@ void ReadEvent()
         exit(1);
     }
 
-    g_MySession.recvQ.Enqueue(buffer, readByte);
+    //g_MySession.recvQ.Enqueue(buffer, readByte);
+    g_MySession.recvQ.Enqueue(clPacket.GetBufferPtr(), readByte);
+    clPacket.MoveWritePos(readByte);
 
     while (TRUE)
     {
@@ -585,37 +591,39 @@ void ReadEvent()
             break;
 
         g_MySession.recvQ.MoveFront(sizeof(st_HEADER));
+       
 
-        g_MySession.recvQ.Dequeue(buffer, stHeader.bySize);
+        //g_MySession.recvQ.Dequeue(buffer, stHeader.bySize);
+        g_MySession.recvQ.Dequeue(clPacket.GetBufferPtr(), stHeader.bySize);
 
         switch (stHeader.byType)
         {
         case dfPACKET_SC_CREATE_MY_CHARACTER:
-            PacketProcCreateMyCharater(buffer);
+            PacketProcCreateMyCharater(&clPacket);
             break;
         case dfPACKET_SC_CREATE_OTHER_CHARACTER:
-            PacketProcCreateOtherCharater(buffer);
+            PacketProcCreateOtherCharater(&clPacket);
             break;
         case dfPACKET_SC_DELETE_CHARACTER:
-            PacketProcDeleteCharater(buffer);
+            PacketProcDeleteCharater(&clPacket);
             break;
         case dfPACKET_SC_MOVE_START:
-            PacketProcSCMoveStart(buffer);
+            PacketProcSCMoveStart(&clPacket);
             break;
         case dfPACKET_SC_MOVE_STOP:
-            PacketProcSCMoveStop(buffer);
+            PacketProcSCMoveStop(&clPacket);
             break;
         case dfPACKET_SC_ATTACK1:
-            PacketProcSCAttack1(buffer);
+            PacketProcSCAttack1(&clPacket);
             break;
         case dfPACKET_SC_ATTACK2:
-            PacketProcSCAttack2(buffer);
+            PacketProcSCAttack2(&clPacket);
             break;
         case dfPACKET_SC_ATTACK3:
-            PacketProcSCAttack3(buffer);
+            PacketProcSCAttack3(&clPacket);
             break;
         case dfPACKET_SC_DAMAGE:
-            PacketProcDamage(buffer);
+            PacketProcDamage(&clPacket);
             break;
         default:
             return;
@@ -623,18 +631,15 @@ void ReadEvent()
     }
 }
 
-void PacketProcCreateMyCharater(const char* buffer)
+void PacketProcCreateMyCharater(CPacket* clpPacket)
 {
-    st_MSG_SC_CREATE_MY_CHARACTER* stMyCharacter = (st_MSG_SC_CREATE_MY_CHARACTER*)buffer;
+    unsigned int dwID;
+    BYTE byDir;
+    USHORT x;
+    USHORT y;
+    BYTE hp;
 
-    // 이부분들 수정 들어가야된다.
-
-    DWORD dwID = stMyCharacter->dwID;
-    BYTE byDir = stMyCharacter->byDir;
-    USHORT x = stMyCharacter->ushX;
-    USHORT y = stMyCharacter->ushY;
-    BYTE hp = stMyCharacter->byHP;
-
+    *clpPacket >> dwID >> byDir >> x >> y >> hp;
 
     CBaseObject* player = new CPlayerObject(TRUE, dwID, eTYPE_PLAYER, x, y, byDir, hp);
     g_List.push_back(player);
@@ -643,15 +648,37 @@ void PacketProcCreateMyCharater(const char* buffer)
     g_pPlayerObject->SetSprite(ePLAYER_STAND_L01, ePLAYER_STAND_L03, dfDELAY_STAND);
 }
 
-void PacketProcCreateOtherCharater(const char* buffer)
+void PacketProcCreateOtherCharater(CPacket* clpPacket)
 {
-    st_MSG_SC_CREATE_OTHER_CHARACTER* stOtherCharacter = (st_MSG_SC_CREATE_OTHER_CHARACTER*)buffer;
+    // client 못 믿어 무조건 예외처리 해야되는거야!!
 
-    DWORD dwID = stOtherCharacter->dwID;
-    BYTE byDir = stOtherCharacter->byDir;
-    DWORD x = stOtherCharacter->ushX;
-    DWORD y = stOtherCharacter->ushY;
-    BYTE hp = stOtherCharacter->byHP;
+    unsigned int dwID;
+    BYTE byDir;
+    USHORT x;
+    USHORT y;
+    BYTE hp;
+
+    *clpPacket >> dwID >> byDir >> x >> y >> hp;
+
+    if (byDir != LL && byDir == RR)
+    {
+        //예외 처리
+    }
+
+    if (x < dfRANGE_MOVE_LEFT || x > dfRANGE_MOVE_RIGHT)
+    {
+
+    }
+
+    if (y < dfRANGE_MOVE_BOTTOM || y > dfRANGE_MOVE_TOP)
+    {
+
+    }
+
+    if (hp > 100 || hp < 0)
+    {
+
+    }
 
     CBaseObject* pEnemy = new CPlayerObject(FALSE, dwID, eTYPE_PLAYER, x, y, byDir, hp);
     if (byDir == LL)
@@ -663,11 +690,13 @@ void PacketProcCreateOtherCharater(const char* buffer)
     g_List.push_back(pEnemy);
 }
 
-void PacketProcDeleteCharater(const char* buffer)
+void PacketProcDeleteCharater(CPacket* clpPacket)
 {
-    st_MSG_SC_DELETE_CHARACTER* stDeleteCharacter = (st_MSG_SC_DELETE_CHARACTER*)buffer;
+    unsigned int deleteId;
 
-    DWORD deleteId = stDeleteCharacter->dwID;
+    *clpPacket >> deleteId;
+
+    // id 예외처리..
 
     auto iter = g_List.begin();
 
@@ -684,16 +713,32 @@ void PacketProcDeleteCharater(const char* buffer)
     }
 }
 
-void PacketProcSCMoveStart(const char* buffer)
+void PacketProcSCMoveStart(CPacket* clpPacket)
 {
-    st_MSG_SC_MOVE_START* stSCMoveStart = (st_MSG_SC_MOVE_START*)buffer;
+    unsigned int dwId;
+    BYTE byDir;
+    USHORT x;
+    USHORT y;
 
-    BYTE dir = stSCMoveStart->byDir;
-    DWORD dwId = stSCMoveStart->dwId;
-    USHORT x = stSCMoveStart->ushX;
-    USHORT y = stSCMoveStart->ushY;
+    *clpPacket >> dwId >> byDir >> x >> y;
 
-    // 여기서 좌표 이동??
+    // id 예외처리
+
+    if (byDir != LL && byDir == RR)
+    {
+        //예외 처리
+    }
+
+    if (x < dfRANGE_MOVE_LEFT || x > dfRANGE_MOVE_RIGHT)
+    {
+
+    }
+
+    if (y < dfRANGE_MOVE_BOTTOM || y > dfRANGE_MOVE_TOP)
+    {
+
+    }
+
     auto iter = g_List.begin();
 
     for (; iter != g_List.end(); ++iter)
@@ -701,20 +746,37 @@ void PacketProcSCMoveStart(const char* buffer)
         if ((*iter)->GetObjectID() == dwId)
         {
             (*iter)->SetPosition(x, y);
-            (*iter)->ActionInput(stSCMoveStart->byDir);
+            (*iter)->ActionInput(byDir);
             break;
         }
     }
 }
 
-void PacketProcSCMoveStop(const char* buffer)
+void PacketProcSCMoveStop(CPacket* clpPacket)
 {
-    st_MSG_SC_MOVE_STOP* stSCMoveStop = (st_MSG_SC_MOVE_STOP*)buffer;
+    unsigned int dwID;
+    BYTE byDir;
+    USHORT x;
+    USHORT y;
 
-    DWORD dwID = stSCMoveStop->dwID;
-    BYTE byDir = stSCMoveStop->byDir;
-    USHORT x = stSCMoveStop->ushX;
-    USHORT y = stSCMoveStop->ushY;
+    *clpPacket >> dwID >> byDir >> x >> y;
+
+    // id 예외처리..
+
+    if (byDir != LL && byDir == RR)
+    {
+        //예외 처리
+    }
+
+    if (x < dfRANGE_MOVE_LEFT || x > dfRANGE_MOVE_RIGHT)
+    {
+
+    }
+
+    if (y < dfRANGE_MOVE_BOTTOM || y > dfRANGE_MOVE_TOP)
+    {
+
+    }
 
     auto iter = g_List.begin();
 
@@ -729,14 +791,29 @@ void PacketProcSCMoveStop(const char* buffer)
     }
 }
 
-void PacketProcSCAttack1(const char* buffer)
+void PacketProcSCAttack1(CPacket* clpPacket)
 {
-    st_MSG_SC_ATTACK1* stSCAttack = (st_MSG_SC_ATTACK1*)buffer;
+    unsigned int dwID;
+    BYTE byDir;
+    USHORT x;
+    USHORT y;
 
-    DWORD dwID = stSCAttack->dwID;
-    BYTE byDir = stSCAttack->byDir;
-    USHORT x = stSCAttack->ushX;
-    USHORT y = stSCAttack->ushY;
+    *clpPacket >> dwID >> byDir >> x >> y;
+
+    if (byDir != LL && byDir == RR)
+    {
+        //예외 처리
+    }
+
+    if (x < dfRANGE_MOVE_LEFT || x > dfRANGE_MOVE_RIGHT)
+    {
+
+    }
+
+    if (y < dfRANGE_MOVE_BOTTOM || y > dfRANGE_MOVE_TOP)
+    {
+
+    }
 
     auto iter = g_List.begin();
 
@@ -761,14 +838,29 @@ void PacketProcSCAttack1(const char* buffer)
     }
 }
 
-void PacketProcSCAttack2(const char* buffer)
+void PacketProcSCAttack2(CPacket* clpPacket)
 {
-    st_MSG_SC_ATTACK2* stSCAttack = (st_MSG_SC_ATTACK2*)buffer;
+    unsigned int dwID;
+    BYTE byDir;
+    USHORT x;
+    USHORT y;
 
-    DWORD dwID = stSCAttack->dwID;
-    BYTE byDir = stSCAttack->byDir;
-    USHORT x = stSCAttack->ushX;
-    USHORT y = stSCAttack->ushY;
+    *clpPacket >> dwID >> byDir >> x >> y;
+
+    if (byDir != LL && byDir == RR)
+    {
+        //예외 처리
+    }
+
+    if (x < dfRANGE_MOVE_LEFT || x > dfRANGE_MOVE_RIGHT)
+    {
+
+    }
+
+    if (y < dfRANGE_MOVE_BOTTOM || y > dfRANGE_MOVE_TOP)
+    {
+
+    }
 
     auto iter = g_List.begin();
 
@@ -793,14 +885,29 @@ void PacketProcSCAttack2(const char* buffer)
     }
 }
 
-void PacketProcSCAttack3(const char* buffer)
+void PacketProcSCAttack3(CPacket* clpPacket)
 {
-    st_MSG_SC_ATTACK3* stSCAttack = (st_MSG_SC_ATTACK3*)buffer;
+    unsigned int dwID;
+    BYTE byDir;
+    USHORT x;
+    USHORT y;
 
-    DWORD dwID = stSCAttack->dwID;
-    BYTE byDir = stSCAttack->byDir;
-    USHORT x = stSCAttack->ushX;
-    USHORT y = stSCAttack->ushY;
+    *clpPacket >> dwID >> byDir >> x >> y;
+
+    if (byDir != LL && byDir == RR)
+    {
+        //예외 처리
+    }
+
+    if (x < dfRANGE_MOVE_LEFT || x > dfRANGE_MOVE_RIGHT)
+    {
+
+    }
+
+    if (y < dfRANGE_MOVE_BOTTOM || y > dfRANGE_MOVE_TOP)
+    {
+
+    }
 
     auto iter = g_List.begin();
 
@@ -826,14 +933,22 @@ void PacketProcSCAttack3(const char* buffer)
     }
 }
 
-void PacketProcDamage(const char* buffer)
+void PacketProcDamage(CPacket* clpPacket)
 {
-    st_MSG_SC_DAMAGE* stSCDamage = (st_MSG_SC_DAMAGE*)buffer;
     CBaseObject* pEffect = nullptr;
 
-    DWORD attackId = stSCDamage->attackID;
-    DWORD damageId = stSCDamage->damageID;
-    BYTE byHp = stSCDamage->byDamageHP;
+    unsigned int attackId;
+    unsigned int damageId;
+    BYTE byHp;
+
+    *clpPacket >> attackId >> damageId >> byHp;
+
+    // attack id 예외처리
+    // damage id 예외처리
+    if (byHp < 0 || byHp > 100)
+    {
+
+    }
 
     auto iter = g_List.begin();
 
@@ -863,6 +978,7 @@ void SendEvent()
 
 void SendPacket()
 {
+    CPacket clPacket;
     char buffer[500];
     int iUseSize;
     int sendByte;
@@ -874,7 +990,51 @@ void SendPacket()
 
     while (TRUE)
     {
-        if (iUseSize > sizeof(buffer))
+        if (iUseSize > clPacket.GetBufferSize())
+        {
+            g_MySession.sendQ.Peek(clPacket.GetBufferPtr(), clPacket.GetBufferSize());
+            sendByte = send(g_MySession.servSock, clPacket.GetBufferPtr(), clPacket.GetBufferSize(), 0);
+            
+            if (sendByte == SOCKET_ERROR || sendByte == 0)
+            {
+                errorCode = WSAGetLastError();
+                if (errorCode != WSAEWOULDBLOCK)
+                {
+                    wprintf(L"SendPacket::send Error: %d\n", errorCode);
+                    return;
+                }
+                break;
+            }
+
+            if (sendByte < clPacket.GetBufferSize())
+                g_MySession.sendQ.MoveFront(sendByte);
+            else
+                g_MySession.sendQ.MoveFront(clPacket.GetBufferSize());
+
+        }
+        else
+        {
+            g_MySession.sendQ.Peek(clPacket.GetBufferPtr(), iUseSize);
+            sendByte = send(g_MySession.servSock, clPacket.GetBufferPtr(), iUseSize, 0);
+            if (sendByte == SOCKET_ERROR || sendByte == 0)
+            {
+                errorCode = WSAGetLastError();
+                if (errorCode != WSAEWOULDBLOCK)
+                {
+                    wprintf(L"SendPacket::send Error: %d\n", errorCode);
+                    return;
+                }
+                break;
+            }
+
+            if (sendByte < iUseSize)
+                g_MySession.sendQ.MoveFront(sendByte);
+            else
+                g_MySession.sendQ.MoveFront(iUseSize);
+
+            break;
+        }
+        /*if (iUseSize > sizeof(buffer))
         {
             g_MySession.sendQ.Peek(buffer, sizeof(buffer));
             sendByte = send(g_MySession.servSock, buffer, sizeof(buffer), 0);
@@ -916,7 +1076,7 @@ void SendPacket()
                 g_MySession.sendQ.MoveFront(iUseSize);
 
             break;
-        }
+        }*/
     }
 }
 

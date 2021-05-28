@@ -7,7 +7,8 @@
 #include "PacketDefine.h"
 #include "PacketStruct.h"
 #include "CRingBuffer.h"
-// a
+#include "CPacket.h"
+
 // 네트워크용 전역변수
 typedef struct st_SESSION
 {
@@ -105,7 +106,6 @@ void CPlayerObject::InputActionProc()
 	case dfACTION_MOVE_LL:
 		SetDirection(LL);
 		//전에 행동과 현재의 행동이 같은데 SetAction 해주면 움직임이 고정된다.
-
 
 		CheckDoMove(dfACTION_MOVE_LL);
 
@@ -220,16 +220,16 @@ char CPlayerObject::GetHP()
 void CPlayerObject::CheckDoMove(BYTE byDir)
 {
 	st_HEADER stHeader;
-	st_MSG_CS_MOVE_START stMoveStart;
+	CPacket clPacket;
 
 	if (m_dwActionOld != m_dwActionCur)
 	{
 		if (IsPlayer())
 		{
 			mp_MakeHeader(&stHeader, 0x89, sizeof(st_MSG_CS_MOVE_START), dfPACKET_CS_MOVE_START);
-			mp_CS_MoveStart(&stMoveStart, byDir, m_ushCurX, m_ushCurY);
+			mp_CS_MoveStart(&clPacket, byDir, m_ushCurX, m_ushCurY);
 			g_MySession.sendQ.Enqueue((char*)&stHeader, sizeof(st_HEADER));
-			g_MySession.sendQ.Enqueue((char*)&stMoveStart, sizeof(st_MSG_CS_MOVE_START));
+			g_MySession.sendQ.Enqueue((char*)clPacket.GetBufferPtr(), sizeof(st_MSG_CS_MOVE_START));
 		}
 
 		if (m_dwActionOld == dfACTION_STAND || m_iDirOld != m_iDirCur)
@@ -240,17 +240,17 @@ void CPlayerObject::CheckDoMove(BYTE byDir)
 void CPlayerObject::CheckDoStand(BYTE byDir)
 {
 	st_HEADER stHeader;
-	st_MSG_CS_MOVE_STOP stMoveStop;
+	CPacket clPacket;
 
 	if (m_dwActionCur != m_dwActionOld)
 	{
 		if (IsPlayer())
 		{
 			mp_MakeHeader(&stHeader, 0x89, sizeof(st_MSG_CS_MOVE_STOP), dfPACKET_CS_MOVE_STOP);
-			mp_CS_MoveStop(&stMoveStop, m_iDirCur, m_ushCurX, m_ushCurY);
+			mp_CS_MoveStop(&clPacket, m_iDirCur, m_ushCurX, m_ushCurY);
 
 			g_MySession.sendQ.Enqueue((char*)&stHeader, sizeof(st_HEADER));
-			g_MySession.sendQ.Enqueue((char*)&stMoveStop, sizeof(st_MSG_CS_MOVE_STOP));
+			g_MySession.sendQ.Enqueue((char*)clPacket.GetBufferPtr(), sizeof(st_MSG_CS_MOVE_STOP));
 		}
 
 		SetActionStand();
@@ -260,8 +260,7 @@ void CPlayerObject::CheckDoStand(BYTE byDir)
 void CPlayerObject::CheckDoAttack1()
 {
 	st_HEADER stHeader;
-	st_MSG_CS_MOVE_STOP stMoveStop;
-	st_MSG_CS_ATTACK1 stAttack1;
+	CPacket clPacket;
 
 	if (m_dwActionOld != m_dwActionCur)
 	{
@@ -273,17 +272,17 @@ void CPlayerObject::CheckDoAttack1()
 				m_dwActionOld == dfACTION_MOVE_LL || m_dwActionOld == dfACTION_MOVE_LU)
 			{
 				mp_MakeHeader(&stHeader, 0x89, sizeof(st_MSG_CS_MOVE_STOP), dfPACKET_CS_MOVE_STOP);
-				mp_CS_MoveStop(&stMoveStop, m_iDirCur, m_ushCurX, m_ushCurY);
+				mp_CS_MoveStop(&clPacket, m_iDirCur, m_ushCurX, m_ushCurY);
 
 				g_MySession.sendQ.Enqueue((char*)&stHeader, sizeof(st_HEADER));
-				g_MySession.sendQ.Enqueue((char*)&stMoveStop, sizeof(st_MSG_CS_MOVE_STOP));
+				g_MySession.sendQ.Enqueue((char*)clPacket.GetBufferPtr(), sizeof(st_MSG_CS_MOVE_STOP));
 			}
 
 			mp_MakeHeader(&stHeader, 0x89, sizeof(st_MSG_CS_ATTACK1), dfPACKET_CS_ATTACK1);
-			mp_CS_Attack1(&stAttack1, m_iDirCur, m_ushCurX, m_ushCurY);
+			mp_CS_Attack1(&clPacket, m_iDirCur, m_ushCurX, m_ushCurY);
 
 			g_MySession.sendQ.Enqueue((char*)&stHeader, sizeof(st_HEADER));
-			g_MySession.sendQ.Enqueue((char*)&stAttack1, sizeof(st_MSG_CS_ATTACK1));
+			g_MySession.sendQ.Enqueue((char*)clPacket.GetBufferPtr(), sizeof(st_MSG_CS_ATTACK1));
 
 		}
 
@@ -294,8 +293,7 @@ void CPlayerObject::CheckDoAttack1()
 void CPlayerObject::CheckDoAttack2()
 {
 	st_HEADER stHeader;
-	st_MSG_CS_MOVE_STOP stMoveStop;
-	st_MSG_CS_ATTACK2 stAttack2;
+	CPacket clPacket;
 
 	if (m_dwActionOld != m_dwActionCur)
 	{
@@ -307,17 +305,17 @@ void CPlayerObject::CheckDoAttack2()
 				m_dwActionOld == dfACTION_MOVE_LL || m_dwActionOld == dfACTION_MOVE_LU)
 			{
 				mp_MakeHeader(&stHeader, 0x89, sizeof(st_MSG_CS_MOVE_STOP), dfPACKET_CS_MOVE_STOP);
-				mp_CS_MoveStop(&stMoveStop, m_iDirCur, m_ushCurX, m_ushCurY);
+				mp_CS_MoveStop(&clPacket, m_iDirCur, m_ushCurX, m_ushCurY);
 
 				g_MySession.sendQ.Enqueue((char*)&stHeader, sizeof(st_HEADER));
-				g_MySession.sendQ.Enqueue((char*)&stMoveStop, sizeof(st_MSG_CS_MOVE_STOP));
+				g_MySession.sendQ.Enqueue((char*)clPacket.GetBufferPtr(), sizeof(st_MSG_CS_MOVE_STOP));
 			}
 
 			mp_MakeHeader(&stHeader, 0x89, sizeof(st_MSG_CS_ATTACK2), dfPACKET_CS_ATTACK2);
-			mp_CS_Attack2(&stAttack2, m_iDirCur, m_ushCurX, m_ushCurY);
+			mp_CS_Attack2(&clPacket, m_iDirCur, m_ushCurX, m_ushCurY);
 
 			g_MySession.sendQ.Enqueue((char*)&stHeader, sizeof(st_HEADER));
-			g_MySession.sendQ.Enqueue((char*)&stAttack2, sizeof(st_MSG_CS_ATTACK2));
+			g_MySession.sendQ.Enqueue((char*)clPacket.GetBufferPtr(), sizeof(st_MSG_CS_ATTACK2));
 
 		}
 		SetActionAttack2();
@@ -327,8 +325,7 @@ void CPlayerObject::CheckDoAttack2()
 void CPlayerObject::CheckDoAttack3()
 {
 	st_HEADER stHeader;
-	st_MSG_CS_MOVE_STOP stMoveStop;
-	st_MSG_CS_ATTACK3 stAttack3;
+	CPacket clPacket;
 
 	if (m_dwActionOld != m_dwActionCur)
 	{
@@ -340,17 +337,17 @@ void CPlayerObject::CheckDoAttack3()
 				m_dwActionOld == dfACTION_MOVE_LL || m_dwActionOld == dfACTION_MOVE_LU)
 			{
 				mp_MakeHeader(&stHeader, 0x89, sizeof(st_MSG_CS_MOVE_STOP), dfPACKET_CS_MOVE_STOP);
-				mp_CS_MoveStop(&stMoveStop, m_iDirCur, m_ushCurX, m_ushCurY);
+				mp_CS_MoveStop(&clPacket, m_iDirCur, m_ushCurX, m_ushCurY);
 
 				g_MySession.sendQ.Enqueue((char*)&stHeader, sizeof(st_HEADER));
-				g_MySession.sendQ.Enqueue((char*)&stMoveStop, sizeof(st_MSG_CS_MOVE_STOP));
+				g_MySession.sendQ.Enqueue((char*)clPacket.GetBufferPtr(), sizeof(st_MSG_CS_MOVE_STOP));
 			}
 
 			mp_MakeHeader(&stHeader, 0x89, sizeof(st_MSG_CS_ATTACK3), dfPACKET_CS_ATTACK3);
-			mp_CS_Attack3(&stAttack3, m_iDirCur, m_ushCurX, m_ushCurY);
+			mp_CS_Attack3(&clPacket, m_iDirCur, m_ushCurX, m_ushCurY);
 
 			g_MySession.sendQ.Enqueue((char*)&stHeader, sizeof(st_HEADER));
-			g_MySession.sendQ.Enqueue((char*)&stAttack3, sizeof(st_MSG_CS_ATTACK3));
+			g_MySession.sendQ.Enqueue((char*)clPacket.GetBufferPtr(), sizeof(st_MSG_CS_ATTACK3));
 
 		}
 

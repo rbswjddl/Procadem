@@ -5,6 +5,8 @@
 
 // 안했을 때 구조체 포인터 접근이 어긋나는 경우 발생
 
+#include "CPacket.h"
+
 #pragma pack(1)
 // PACKET STRUCT
 
@@ -128,19 +130,19 @@ void mp_SC_CreteOtherCharacter(st_MSG_SC_CREATE_MY_CHARACTER* packet, DWORD id, 
 
 void mp_SC_DeleteCharacter(st_MSG_SC_DELETE_CHARACTER* packet, DWORD id);
 
-void mp_CS_MoveStart(st_MSG_CS_MOVE_START* packet, BYTE dir, USHORT x, USHORT y);
-void mp_SC_MoveStart(st_MSG_CS_MOVE_START* packet, BYTE dir, USHORT x, USHORT y);
+void mp_CS_MoveStart(CPacket* clpPacket, BYTE dir, USHORT x, USHORT y);
+void mp_SC_MoveStart(st_MSG_SC_MOVE_START* packet, BYTE dir, USHORT x, USHORT y);
 
-void mp_CS_MoveStop(st_MSG_CS_MOVE_STOP* packet, BYTE dir, USHORT x, USHORT y);
+void mp_CS_MoveStop(CPacket* clpPacket, BYTE dir, USHORT x, USHORT y);
 void mp_SC_MoveStop(st_MSG_CS_MOVE_STOP* packet, BYTE dir, USHORT x, USHORT y);
 
-void mp_CS_Attack1(st_MSG_CS_ATTACK1* packet, BYTE dir, USHORT x, USHORT y);
+void mp_CS_Attack1(CPacket* clpPacket, BYTE dir, USHORT x, USHORT y);
 void mp_SC_Attack1(st_MSG_SC_ATTACK1* packet, DWORD id, BYTE dir, USHORT x, USHORT y);
 
-void mp_CS_Attack2(st_MSG_CS_ATTACK2* packet, BYTE dir, USHORT x, USHORT y);
+void mp_CS_Attack2(CPacket* clpPacket, BYTE dir, USHORT x, USHORT y);
 void mp_SC_Attack2(st_MSG_SC_ATTACK2* packet, DWORD id, BYTE dir, USHORT x, USHORT y);
 
-void mp_CS_Attack3(st_MSG_CS_ATTACK3* packet, BYTE dir, USHORT x, USHORT y);
+void mp_CS_Attack3(CPacket* clpPacket, BYTE dir, USHORT x, USHORT y);
 void mp_SC_Attack3(st_MSG_SC_ATTACK3* packet, DWORD id, BYTE dir, USHORT x, USHORT y);
 
 void mp_SC_Damage(st_MSG_SC_DAMAGE* packet, DWORD attackId, DWORD damageId, BYTE damageHP);

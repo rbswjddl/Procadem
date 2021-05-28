@@ -62,6 +62,9 @@
     <ClInclude Include="PacketStruct.h">
       <Filter>소스 파일\Network</Filter>
     </ClInclude>
+    <ClInclude Include="CPacket.h">
+      <Filter>소스 파일\Network</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="TCPFighter.rc">
@@ -99,6 +102,9 @@
       <Filter>소스 파일\Network</Filter>
     </ClCompile>
     <ClCompile Include="PacketStruct.cpp">
+      <Filter>소스 파일\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="CPacket.cpp">
       <Filter>소스 파일\Network</Filter>
     </ClCompile>
   </ItemGroup>

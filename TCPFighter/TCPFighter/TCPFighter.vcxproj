@@ -141,6 +141,7 @@
   <ItemGroup>
     <ClInclude Include="CBaseObject.h" />
     <ClInclude Include="CEffectObject.h" />
+    <ClInclude Include="CPacket.h" />
     <ClInclude Include="CPlayerObject.h" />
     <ClInclude Include="CRingBuffer.h" />
     <ClInclude Include="CScreenDib.h" />
@@ -156,6 +157,7 @@
   <ItemGroup>
     <ClCompile Include="CBaseObject.cpp" />
     <ClCompile Include="CEffectObject.cpp" />
+    <ClCompile Include="CPacket.cpp" />
     <ClCompile Include="CPlayerObject.cpp" />
     <ClCompile Include="CRingBuffer.cpp" />
     <ClCompile Include="CScreenDib.cpp" />

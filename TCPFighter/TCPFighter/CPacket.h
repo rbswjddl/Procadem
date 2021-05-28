@@ -58,6 +58,7 @@ public:
 	CPacket& operator<< (short				shValue);
 	CPacket& operator<< (unsigned int		uiValue);
 	CPacket& operator<< (int				iValue);
+	CPacket& operator<< (unsigned long		lValue);
 	CPacket& operator<< (long				lValue);
 	CPacket& operator<< (__int64			iValue);
 	CPacket& operator<< (float				fValue);
